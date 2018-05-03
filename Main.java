@@ -100,7 +100,7 @@ public class Main extends Application {
     }
     
     public Point[] getPoints() throws IOException {
-        File toRead = new File("/home/nicke/Documents/3D_Aula_3.log");
+        File toRead = new File("/home/nicke/Documents/3D_Torvet_28_04_2.log");
         List<String> data = Files.readAllLines(toRead.toPath());
         
         ArrayList<Point> points = new ArrayList<>();
