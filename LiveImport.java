@@ -15,11 +15,13 @@ public class LiveImport {
         Thread t = new Thread(() -> {
             Runtime runtime = Runtime.getRuntime();
             try {
-                Process process = runtime.exec("pio serialports monitor -b 115200 --raw | tee 3D-scanning.log");
+                //Process process = runtime.exec("pio serialports monitor -b 115200 --raw | tee 3D-scanning.log");
+                Process process = runtime.exec("java -jar /home/nicke/NetBeansProjects/Handy/dist/Handy.jar | tee 3D-scanning.log");
 
                 BufferedReader stdIn = new BufferedReader(new InputStreamReader(process.getInputStream()));
                 String input;
                 while ((input = stdIn.readLine()) != null) {
+                    System.out.println(input);
                     int distance;
                     try {
                         distance = Integer.parseInt(input) + 5;
