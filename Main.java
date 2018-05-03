@@ -9,6 +9,9 @@ import java.util.Comparator;
 import java.util.List;
 import javafx.application.Application;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
+import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
@@ -28,7 +31,8 @@ public class Main extends Application {
     
     @Override
     public void start(Stage primaryStage) throws IOException {
-        Point[] points = getPoints();
+        //Point[] points = getPoints();
+        ObservableList<Point> pointList = FXCollections.observableArrayList();
         
         BorderPane root = new BorderPane();
         
@@ -46,10 +50,11 @@ public class Main extends Application {
         HBox.setHgrow(z, Priority.ALWAYS);
         HBox.setHgrow(focal, Priority.ALWAYS);
         HBox.setHgrow(scaling, Priority.ALWAYS);
-        
+
         ResizableCanvas canvas = new ResizableCanvas() {
             @Override
             public void draw() {
+                Point[] points = pointList.toArray(new Point[0]);
                 Point[] projectedPoints = getProjectedPoints(z.getValue(), focal.getValue(), getRotatedPoints(v_x.getValue(), v_z.getValue(), points));
                 
                 Arrays.sort(projectedPoints, Comparator.comparingDouble(p -> p.z));
@@ -71,6 +76,7 @@ public class Main extends Application {
                 }
             }
         };
+        pointList.addListener((ListChangeListener<Point>) c -> canvas.draw());
         
         v_x.valueProperty().addListener((ObservableValue<? extends Number> observable, Number oldValue, Number newValue) -> canvas.draw());
         v_z.valueProperty().addListener((ObservableValue<? extends Number> observable, Number oldValue, Number newValue) -> canvas.draw());
@@ -179,7 +185,7 @@ public class Main extends Application {
         return projectedPoints;
     }
     
-    public class Point {
+    public static class Point {
         public double x, y, z;
         public Point(double x, double y, double z) {
             this.x = x;
