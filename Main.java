@@ -33,6 +33,7 @@ public class Main extends Application {
     public void start(Stage primaryStage) throws IOException {
         //Point[] points = getPoints();
         ObservableList<Point> pointList = FXCollections.observableArrayList();
+        LiveImport.liveImport(400, pointList);
         
         BorderPane root = new BorderPane();
         
@@ -54,7 +55,7 @@ public class Main extends Application {
         ResizableCanvas canvas = new ResizableCanvas() {
             @Override
             public void draw() {
-                Point[] points = pointList.toArray(new Point[0]);
+                Point[] points = pointList.toArray(new Point[pointList.size()]);
                 Point[] projectedPoints = getProjectedPoints(z.getValue(), focal.getValue(), getRotatedPoints(v_x.getValue(), v_z.getValue(), points));
                 
                 Arrays.sort(projectedPoints, Comparator.comparingDouble(p -> p.z));
@@ -76,7 +77,10 @@ public class Main extends Application {
                 }
             }
         };
-        pointList.addListener((ListChangeListener<Point>) c -> canvas.draw());
+        pointList.addListener((ListChangeListener<Point>) c -> {
+            //System.out.println("list change event");
+            canvas.draw();
+        });
         
         v_x.valueProperty().addListener((ObservableValue<? extends Number> observable, Number oldValue, Number newValue) -> canvas.draw());
         v_z.valueProperty().addListener((ObservableValue<? extends Number> observable, Number oldValue, Number newValue) -> canvas.draw());

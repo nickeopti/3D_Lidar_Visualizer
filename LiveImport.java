@@ -6,38 +6,57 @@ import javafx.collections.ObservableList;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 
 public class LiveImport {
 
-    private static int n = 0;
+    private static int n = -1;
 
     public static void liveImport(int spr, ObservableList<Main.Point> pointList) {
         Thread t = new Thread(() -> {
             Runtime runtime = Runtime.getRuntime();
             try {
                 //Process process = runtime.exec("pio serialports monitor -b 115200 --raw | tee 3D-scanning.log");
-                Process process = runtime.exec("java -jar /home/nicke/NetBeansProjects/Handy/dist/Handy.jar | tee 3D-scanning.log");
+
+                String[] cmd = {
+                        "/bin/sh",
+                        "-c",
+                        //"ls /etc | grep release"
+                        "java -jar /home/nicke/NetBeansProjects/Handy/dist/Handy.jar | tee ~/Documents/3D-test.log"
+                };
+                Process process = runtime.exec(cmd);
+                //Process process = runtime.exec("java -jar /home/nicke/NetBeansProjects/Handy/dist/Handy.jar | tee ~/Documents/3D-test.log");
+
+                ArrayList<Main.Point> temp = new ArrayList<>();
 
                 BufferedReader stdIn = new BufferedReader(new InputStreamReader(process.getInputStream()));
                 String input;
                 while ((input = stdIn.readLine()) != null) {
-                    System.out.println(input);
+                    n++;
                     int distance;
                     try {
-                        distance = Integer.parseInt(input) + 5;
+                        distance = Integer.parseInt(input);
                     } catch (NumberFormatException nfe) {
                         continue;
                     }
 
-                    if (distance == 1)
+                    if (distance <= 6)
                         continue;
 
-                    Platform.runLater(() -> pointList.add(rotatePoint(spr, n, distance)));
+                    temp.add(rotatePoint(spr, n, distance));
+
+                    if (temp.size() == spr / 8) {
+                        final Main.Point[] ps = temp.toArray(new Main.Point[temp.size()]);
+                        temp.clear();
+                        Platform.runLater(() -> pointList.addAll(ps));
+                    }
+                    //Platform.runLater(() -> pointList.add(rotatePoint(spr, n, distance)));
                 }
             } catch (IOException e) {
                 e.printStackTrace();
             }
         });
+        t.start();
     }
 
     public static Main.Point rotatePoint(int spr, int n, int distance) {
