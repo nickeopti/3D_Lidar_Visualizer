@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
+import javafx.animation.Animation;
 import javafx.animation.Interpolator;
 import javafx.animation.SequentialTransition;
 import javafx.animation.Transition;
@@ -33,35 +34,38 @@ import javafx.util.Duration;
  */
 public class Main extends Application {
 
+    private Slider v_x, v_z, focal, scaling, x, y, z;
+    private ResizableCanvas canvas;
+    Point[] points;
+    double radius = 1;
+
     @Override
     public void start(Stage primaryStage) throws IOException {
-        Point[] points = getPoints();
+        points = getPoints();
         
         BorderPane root = new BorderPane();
         
         HBox settings = new HBox(10);
         settings.setPadding(new Insets(10));
-        Slider v_x = new Slider(-Math.PI/2d, Math.PI/2d, 0);
-        Slider v_z = new Slider(-Math.PI*4, Math.PI*4, 0);
-        Slider z = new Slider(-1000, 300, 0);
-        Slider focal = new Slider(5, 250, 200);
-        Slider scaling = new Slider(0.1, 20, 1);
+        v_x = new Slider(-Math.PI/2d, Math.PI/2d, 0);
+        v_z = new Slider(-Math.PI*4, Math.PI*4, 0);
+        focal = new Slider(5, 250, 200);
+        scaling = new Slider(0.1, 20, 1);
 
-        Slider x = new Slider(-2000, 2000, 0);
-        Slider y = new Slider(-2000, 2000, 0);
-        Slider sy = new Slider(-2000, 2000, 0);
+        x = new Slider(-2000, 2000, 0);
+        y = new Slider(-2000, 2000, 0);
+        z = new Slider(-2000, 2000, 0);
         
-        settings.getChildren().addAll(v_x, v_z, z, focal, scaling, x, y, sy);
+        settings.getChildren().addAll(v_x, v_z, focal, scaling, x, y, z);
         HBox.setHgrow(v_x, Priority.ALWAYS);
         HBox.setHgrow(v_z, Priority.ALWAYS);
-        HBox.setHgrow(z, Priority.ALWAYS);
         HBox.setHgrow(focal, Priority.ALWAYS);
         HBox.setHgrow(scaling, Priority.ALWAYS);
         HBox.setHgrow(x, Priority.ALWAYS);
         HBox.setHgrow(y, Priority.ALWAYS);
-        HBox.setHgrow(sy, Priority.ALWAYS);
+        HBox.setHgrow(z, Priority.ALWAYS);
         
-        ResizableCanvas canvas = new ResizableCanvas() {
+        canvas = new ResizableCanvas() {
             Point[] projectedPoints;
 
             @Override
@@ -82,7 +86,7 @@ public class Main extends Application {
                     if (p.z < 0)
                         continue;
                     gc.setFill(Color.hsb(p.z/2000d*360, 1, 1));
-                    double radius = 4, scale = scaling.getValue();
+                    double scale = scaling.getValue();
                     gc.fillOval(
                             p.x*scale - radius/2 + getWidth()/2,
                             p.y*scale - radius/2 + getHeight()*0.75,
@@ -90,7 +94,7 @@ public class Main extends Application {
                 }
             }
         };
-        draw(canvas, v_x.getValue(), v_z.getValue(), focal.getValue(), z.getValue(), x.getValue(), y.getValue(), sy.getValue(), points);
+        draw(canvas, v_x.getValue(), v_z.getValue(), focal.getValue(), x.getValue(), y.getValue(), z.getValue());
         canvas.setOnScroll(me -> {
             if (!me.isShiftDown() && !me.isControlDown()) {
                 v_x.setValue(v_x.getValue() + me.getDeltaY() / 720d);
@@ -100,10 +104,10 @@ public class Main extends Application {
                 y.setValue(y.getValue() - me.getDeltaY() / 10d);
             } else if (!me.isShiftDown() && me.isControlDown()) {
                 x.setValue(x.getValue() + me.getDeltaY()*Math.sin(v_z.getValue()) / 10d - me.getDeltaX()*Math.cos(v_z.getValue()) / 10d);
-                sy.setValue(sy.getValue() - me.getDeltaY()*Math.cos(v_z.getValue()) / 10d - me.getDeltaX()*Math.sin(v_z.getValue()) / 10d);
+                z.setValue(z.getValue() - me.getDeltaY()*Math.cos(v_z.getValue()) / 10d - me.getDeltaX()*Math.sin(v_z.getValue()) / 10d);
 
             }
-            draw(canvas, v_x.getValue(), v_z.getValue(), focal.getValue(), z.getValue(), x.getValue(), y.getValue(), sy.getValue(), points);
+            draw(canvas, v_x.getValue(), v_z.getValue(), focal.getValue(), x.getValue(), y.getValue(), z.getValue());
         });
 
         Pane p = new Pane(canvas);
@@ -115,112 +119,46 @@ public class Main extends Application {
         
         Scene scene = new Scene(root, 900, 500);
 
-        Transition move1 = new Transition() {
-            {
-                setCycleDuration(Duration.seconds(5));
-                setCycleCount(1);
-                setInterpolator(Interpolator.EASE_BOTH);
-            }
-            @Override
-            protected void interpolate(double frac) {
-                x.setValue((346.6237110397198 - -23.143080885953673) * frac + -23.143080885953673);
-                y.setValue((-200 - -276.0) * frac + -276.0);
-                sy.setValue((-142.86789514357395 - 34.16866685833426) * frac + 34.16866685833426);
-                v_x.setValue((-0.38888888888888884 - -0.4041296601282294) * frac + -0.4041296601282294);
-                v_z.setValue((1.1666666666666667 - 1.272370248375952) * frac + 1.272370248375952);
-                focal.setValue((150 - 210) * frac + 210);
-                draw(canvas, v_x.getValue(), v_z.getValue(), focal.getValue(), z.getValue(), x.getValue(), y.getValue(), sy.getValue(), points);
-            }
-        };
-        Transition move2 = new Transition() {
-            {
-                setCycleDuration(Duration.seconds(5));
-                setCycleCount(1);
-                setInterpolator(Interpolator.EASE_BOTH);
-            }
-            @Override
-            protected void interpolate(double frac) {
-                x.setValue((-927.4145815319733 - 346.6237110397198) * frac + 346.6237110397198);
-                y.setValue(-200);
-                sy.setValue((336.7428105970479 - -142.86789514357395) * frac + -142.86789514357395);
-                v_x.setValue(-0.38888888888888884);
-                v_z.setValue(1.1666666666666667);
-                focal.setValue((210 - 150) * frac + 150);
-                draw(canvas, v_x.getValue(), v_z.getValue(), focal.getValue(), z.getValue(), x.getValue(), y.getValue(), sy.getValue(), points);
-            }
-        };
-        Transition move3 = new Transition() {
-            {
-                setCycleDuration(Duration.seconds(5));
-                setCycleCount(1);
-                setInterpolator(Interpolator.EASE_BOTH);
-            }
-            @Override
-            protected void interpolate(double frac) {
-                x.setValue((-734.06512064928 - -927.4145815319733) * frac + -927.4145815319733);
-                y.setValue((-524.0 - -200.0) * frac + -200.0);
-                sy.setValue((249.70267056744578 - 336.7428105970479) * frac + 336.7428105970479);
-                v_x.setValue(-0.38888888888888884);
-                v_z.setValue(1.1666666666666667);
-                draw(canvas, v_x.getValue(), v_z.getValue(), focal.getValue(), z.getValue(), x.getValue(), y.getValue(), sy.getValue(), points);
-            }
-        };
-        Transition move4 = new Transition() {
-            {
-                setCycleDuration(Duration.seconds(5));
-                setCycleCount(1);
-                setInterpolator(Interpolator.EASE_BOTH);
-            }
-            @Override
-            protected void interpolate(double frac) {
-                x.setValue((-403.08814483523236 - -734.06512064928) * frac + -734.06512064928);
-                y.setValue((-852.0 - -524.0) * frac + -524.0);
-                sy.setValue((138.6070294243774 - 249.70267056744578) * frac + 249.70267056744578);
-                v_x.setValue((-1.166666666666667 - -0.38888888888888884) * frac + -0.38888888888888884);
-                v_z.setValue(1.1666666666666667);
-                draw(canvas, v_x.getValue(), v_z.getValue(), focal.getValue(), z.getValue(), x.getValue(), y.getValue(), sy.getValue(), points);
-            }
-        };
-        Transition move5 = new Transition() {
-            {
-                setCycleDuration(Duration.seconds(5));
-                setCycleCount(1);
-                setInterpolator(Interpolator.EASE_BOTH);
-            }
-            @Override
-            protected void interpolate(double frac) {
-                x.setValue((45.67455016555969 - -403.08814483523236) * frac + -403.08814483523236);
-                y.setValue((-1256.0 - -852.0) * frac + -852.0);
-                sy.setValue((12.999499268233212 - 138.6070294243774) * frac + 138.6070294243774);
-                v_x.setValue((-1.5707963267948966 - -1.166666666666667) * frac + -1.166666666666667);
-                v_z.setValue((-0.3888888888888892 - 1.1666666666666667) * frac + 1.1666666666666667);
-                draw(canvas, v_x.getValue(), v_z.getValue(), focal.getValue(), z.getValue(), x.getValue(), y.getValue(), sy.getValue(), points);
-            }
-        };
-        Transition move6 = new Transition() {
-            {
-                setCycleDuration(Duration.seconds(20));
-                setCycleCount(1);
-                setInterpolator(Interpolator.EASE_BOTH);
-            }
-            @Override
-            protected void interpolate(double frac) {
-                x.setValue((-23.143080885953673 - 45.67455016555969) * frac + 45.67455016555969);
-                y.setValue((-276.0 - -1256.0) * frac + -1256.0);
-                sy.setValue((34.16866685833426 - 12.999499268233212) * frac + 12.999499268233212);
-                v_x.setValue((-0.4041296601282294 - -1.5707963267948966) * frac + -1.5707963267948966);
-                v_z.setValue((7.555555555555538 - -0.3888888888888892) * frac + -0.3888888888888892);
-                draw(canvas, v_x.getValue(), v_z.getValue(), focal.getValue(), z.getValue(), x.getValue(), y.getValue(), sy.getValue(), points);
-            }
-        };
-        Transition seq = new SequentialTransition(move1, move2, move3, move4, move5, move6);
-        seq.setCycleCount(1);
+
+
+        Transition move1 = cameraTransition(-0.38888888888888895, 1.2222222222222225, 202.00000000000003, 454.8901054188032, -156.0, -190.85747921887472,
+                -0.1819074379060071, 1.283185307179604, 250.0, -67.99154384377512, -144.0, 10.087008724062809);
+        Transition move2 = cameraTransition(-0.38888888888888895, 1.2222222222222225, 202.00000000000003, -706.7777125403236, -156.0, 231.30822369654925,
+                -0.38888888888888895, 1.2222222222222225, 202.00000000000003, 454.8901054188032, -156.0, -190.85747921887472);
+        Transition move3 = cameraTransition(-0.8333333333333336, 1.2222222222222225, 202.00000000000003, -590.2349864667545, -512.0, 188.95503020017992,
+                -0.38888888888888895, 1.2222222222222225, 202.00000000000003, -706.7777125403236, -156.0, 231.30822369654925);
+        Transition move4 = cameraTransition(-1.5707963267948966, -0.38888888888888895, 250.0, 67.79158071525913, -1252.0, 65.97306792418387,
+                -0.8333333333333336, 1.2222222222222225, 202.00000000000003, -590.2349864667545, -512.0, 188.95503020017992);
+        Transition move5 = cameraTransition(-0.1819074379060071, 7.56637061435919, 250.0, -67.99154384377512, -144.0, 10.087008724062809,
+                -1.5707963267948966, -0.38888888888888895, 250.0, 67.79158071525913, -1252.0, 65.97306792418387, 20);
+
+        Transition seq = new SequentialTransition(move1, move2, move3, move4, move5);
+        seq.setCycleCount(-1);
 
         scene.setOnKeyPressed(ke -> {
-            if (ke.getCode() == KeyCode.P) {
-                System.out.println(x.getValue() + "," + y.getValue() + "," + sy.getValue() + "\t" + v_x.getValue() + "," + v_z.getValue() + "\t" + focal.getValue());
-            } else if (ke.getCode() == KeyCode.R) {
-                seq.playFromStart();
+            switch (ke.getCode()) {
+                case P:
+                    System.out.println(v_x.getValue() + ", " + v_z.getValue() + ", " + focal.getValue() + ", " + x.getValue() + ", " + y.getValue() + ", " + z.getValue());
+                    break;
+                case R: case SPACE: case PAGE_DOWN: case PAGE_UP:
+                    if (ke.isControlDown() || ke.isShiftDown() || ke.getCode() == KeyCode.PAGE_UP) {
+                        seq.playFromStart();
+                        break;
+                    }
+                    if (seq.getStatus() == Animation.Status.RUNNING)
+                        seq.pause();
+                    else
+                        seq.play();
+                    break;
+                case PLUS: case ADD: case F5:
+                    radius++;
+                    draw(canvas, v_x.getValue(), v_z.getValue(), focal.getValue(), x.getValue(), y.getValue(), z.getValue());
+                    break;
+                case MINUS: case SUBTRACT: case PERIOD:
+                    if (radius > 1)
+                        radius--;
+                    draw(canvas, v_x.getValue(), v_z.getValue(), focal.getValue(), x.getValue(), y.getValue(), z.getValue());
+                    break;
             }
         });
 
@@ -236,12 +174,11 @@ public class Main extends Application {
         launch(args);
     }
 
-    public void draw(ResizableCanvas canvas, double v_x, double v_z, double focal, double z, double x, double y, double sy, Point... points) {
+    public void draw(ResizableCanvas canvas, double v_x, double v_z, double focal, double x, double y, double z) {
         Task<Point[]> calculatePoints = new Task<Point[]>() {
             @Override
             protected Point[] call() throws Exception {
-                //Point[] projectedPoints = getProjectedPoints(z, focal, getRotatedPoints(v_x, v_z, points));
-                Point[] projectedPoints = getProjectedPoints(z, focal, getRotatedPoints(v_x, v_z, getTranslatedPoints(x, y, sy, points)));
+                Point[] projectedPoints = Camera.getProjectedPoints(focal, Camera.getRotatedPoints(v_x, 0, v_z, Camera.getTranslatedPoints(x, y, z, points)));
                 Arrays.sort(projectedPoints, Comparator.comparingDouble(p -> p.z));
                 return projectedPoints;
             }
@@ -293,65 +230,33 @@ public class Main extends Application {
         return points.toArray(new Point[0]);
     }
 
-    public Point[] getTranslatedPoints(double x, double y, double z, Point... points) {
-        Point[] translatedPoints = new Point[points.length];
-        for (int i = 0; i < translatedPoints.length; i++) {
-            translatedPoints[i] = new Point(points[i].x + x, points[i].y + y, points[i].z + z);
-        }
-        return translatedPoints;
+    public Transition cameraTransition(double new_v_x, double new_v_z, double new_focal, double new_x, double new_y, double new_z,
+                                       double old_v_x, double old_v_z, double old_focal, double old_x, double old_y, double old_z) {
+        return cameraTransition(new_v_x, new_v_z, new_focal, new_x, new_y, new_z, old_v_x, old_v_z, old_focal, old_x, old_y, old_z, 5);
     }
 
-    public Point[] getRotatedPoints(double v_x, double v_z, Point... points) {
-        double[] r_x0 = {1, 0, 0};
-        double[] r_x1 = {0, Math.cos(v_x), -Math.sin(v_x)};
-        double[] r_x2 = {0, Math.sin(v_x), Math.cos(v_x)};
-        Matrix r_x = new Matrix(r_x0, r_x1, r_x2);
-        
-        double[] r_y0 = {Math.cos(v_z), 0, Math.sin(v_z)};
-        double[] r_y1 = {0, 1, 0};
-        double[] r_y2 = {-Math.sin(v_z), 0, Math.cos(v_z)};
-        Matrix r_y = new Matrix(r_y0, r_y1, r_y2);
-        
-        double[] r_z0 = {Math.cos(v_z), -Math.sin(v_z), 0};
-        double[] r_z1 = {Math.sin(v_z), Math.cos(v_z), 0};
-        double[] r_z2 = {0, 0, 1};
-        Matrix r_z = new Matrix(r_z0, r_z1, r_z2);
-        
-        Matrix r = r_x.multiplyMatrix(r_y);
-        
-        Point[] rotatedPoints = new Point[points.length];
-        for (int i = 0; i < rotatedPoints.length; i++) {
-            double[] vector = {points[i].x, points[i].y, points[i].z};
-            Matrix rotatedVector = r.multiplyMatrix(new Matrix(vector).transform());
-            rotatedPoints[i] = new Point(rotatedVector.getValue(0, 0), rotatedVector.getValue(1, 0), rotatedVector.getValue(2, 0));
-        }
-        
-        return rotatedPoints;
-    }
-    
-    public Point[] getProjectedPoints(double z, double focalLength, Point... points) {
-        Point[] projectedPoints = new Point[points.length];
-        for (int i = 0; i < projectedPoints.length; i++) {
-            projectedPoints[i] = new Point(
-                    -focalLength / (points[i].z) * points[i].x,
-                    -focalLength / (points[i].z) * points[i].y,
-                    points[i].z-z);
-        }
-        
-        return projectedPoints;
-    }
-    
-    public class Point {
-        public double x, y, z;
-        public Point(double x, double y, double z) {
-            this.x = x;
-            this.y = y;
-            this.z = z;
-        }
-        @Override
-        public String toString() {
-            return "(" + x + ", " + y + "," + z + ")";
-        }
+    public Transition cameraTransition(double new_v_x, double new_v_z, double new_focal, double new_x, double new_y, double new_z,
+                                       double old_v_x, double old_v_z, double old_focal, double old_x, double old_y, double old_z,
+                                       double duration) {
+        Transition move = new Transition() {
+            {
+                setCycleDuration(Duration.seconds(duration));
+                setCycleCount(1);
+                setInterpolator(Interpolator.EASE_BOTH);
+            }
+            @Override
+            protected void interpolate(double frac) {
+                v_x.setValue((new_v_x - old_v_x) * frac + old_v_x);
+                v_z.setValue((new_v_z - old_v_z) * frac + old_v_z);
+                focal.setValue((new_focal - old_focal) * frac + old_focal);
+                x.setValue((new_x - old_x) * frac + old_x);
+                y.setValue((new_y - old_y) * frac + old_y);
+                z.setValue((new_z - old_z) * frac + old_z);
+                draw(canvas, v_x.getValue(), v_z.getValue(), focal.getValue(), x.getValue(), y.getValue(), z.getValue());
+            }
+        };
+
+        return move;
     }
 
     public abstract class ResizableCanvas extends Canvas {
@@ -379,7 +284,7 @@ public class Main extends Application {
         public double prefHeight(double width) {
             return getHeight();
         }
-        
+
     }
-    
+
 }
