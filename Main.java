@@ -7,19 +7,26 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+
+import javafx.animation.Interpolator;
+import javafx.animation.SequentialTransition;
+import javafx.animation.Transition;
 import javafx.application.Application;
 import javafx.beans.value.ObservableValue;
+import javafx.concurrent.Task;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Slider;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 
 /**
  * @author Nicklas Boserup
@@ -35,25 +42,42 @@ public class Main extends Application {
         HBox settings = new HBox(10);
         settings.setPadding(new Insets(10));
         Slider v_x = new Slider(-Math.PI/2d, Math.PI/2d, 0);
-        Slider v_z = new Slider(-Math.PI*2, Math.PI*2, 0);
+        Slider v_z = new Slider(-Math.PI*4, Math.PI*4, 0);
         Slider z = new Slider(-1000, 300, 0);
-        Slider focal = new Slider(5, 70, 20);
+        Slider focal = new Slider(5, 250, 200);
         Slider scaling = new Slider(0.1, 20, 1);
+
+        Slider x = new Slider(-2000, 2000, 0);
+        Slider y = new Slider(-2000, 2000, 0);
+        Slider sy = new Slider(-2000, 2000, 0);
         
-        settings.getChildren().addAll(v_x, v_z, z, focal, scaling);
+        settings.getChildren().addAll(v_x, v_z, z, focal, scaling, x, y, sy);
         HBox.setHgrow(v_x, Priority.ALWAYS);
         HBox.setHgrow(v_z, Priority.ALWAYS);
         HBox.setHgrow(z, Priority.ALWAYS);
         HBox.setHgrow(focal, Priority.ALWAYS);
         HBox.setHgrow(scaling, Priority.ALWAYS);
+        HBox.setHgrow(x, Priority.ALWAYS);
+        HBox.setHgrow(y, Priority.ALWAYS);
+        HBox.setHgrow(sy, Priority.ALWAYS);
         
         ResizableCanvas canvas = new ResizableCanvas() {
+            Point[] projectedPoints;
+
+            @Override
+            public void setProjectedPoints(Point... points) {
+                projectedPoints = points;
+            }
+
             @Override
             public void draw() {
-                Point[] projectedPoints = getProjectedPoints(z.getValue(), focal.getValue(), getRotatedPoints(v_x.getValue(), v_z.getValue(), points));
+                //Point[] projectedPoints = getProjectedPoints(z.getValue(), focal.getValue(), getRotatedPoints(v_x.getValue(), v_z.getValue(), points));
                 
-                Arrays.sort(projectedPoints, Comparator.comparingDouble(p -> p.z));
-                
+                //Arrays.sort(projectedPoints, Comparator.comparingDouble(p -> p.z));
+
+                if (projectedPoints == null)
+                    return;
+
                 GraphicsContext gc = getGraphicsContext2D();
                 gc.clearRect(0, 0, getWidth(), getHeight());
                 
@@ -71,13 +95,39 @@ public class Main extends Application {
                 }
             }
         };
-        
+        draw(canvas, v_x.getValue(), v_z.getValue(), focal.getValue(), z.getValue(), x.getValue(), y.getValue(), sy.getValue(), points);
+        canvas.setOnScroll(me -> {
+            if (!me.isShiftDown() && !me.isControlDown()) {
+                v_x.setValue(v_x.getValue() + me.getDeltaY() / 720d);
+                v_z.setValue(v_z.getValue() - me.getDeltaX() / 720d);
+            } else if(me.isShiftDown() && !me.isControlDown()) {
+                focal.setValue(focal.getValue() + me.getDeltaX() / 100d);
+                y.setValue(y.getValue() - me.getDeltaY() / 10d);
+            } else if (!me.isShiftDown() && me.isControlDown()) {
+                x.setValue(x.getValue() + me.getDeltaY()*Math.sin(v_z.getValue()) / 10d - me.getDeltaX()*Math.cos(v_z.getValue()) / 10d);
+                sy.setValue(sy.getValue() - me.getDeltaY()*Math.cos(v_z.getValue()) / 10d - me.getDeltaX()*Math.sin(v_z.getValue()) / 10d);
+
+            }
+            draw(canvas, v_x.getValue(), v_z.getValue(), focal.getValue(), z.getValue(), x.getValue(), y.getValue(), sy.getValue(), points);
+        });
+        /*
         v_x.valueProperty().addListener((ObservableValue<? extends Number> observable, Number oldValue, Number newValue) -> canvas.draw());
         v_z.valueProperty().addListener((ObservableValue<? extends Number> observable, Number oldValue, Number newValue) -> canvas.draw());
         z.valueProperty().addListener((ObservableValue<? extends Number> observable, Number oldValue, Number newValue) -> canvas.draw());
         focal.valueProperty().addListener((ObservableValue<? extends Number> observable, Number oldValue, Number newValue) -> canvas.draw());
         scaling.valueProperty().addListener((ObservableValue<? extends Number> observable, Number oldValue, Number newValue) -> canvas.draw());
-        
+
+
+        v_x.valueProperty().addListener((ObservableValue<? extends Number> observable, Number oldValue, Number newValue) -> draw(canvas, v_x.getValue(), v_z.getValue(), focal.getValue(), z.getValue(), x.getValue(), y.getValue(), sy.getValue(), points));
+        v_z.valueProperty().addListener((ObservableValue<? extends Number> observable, Number oldValue, Number newValue) -> draw(canvas, v_x.getValue(), v_z.getValue(), focal.getValue(), z.getValue(), x.getValue(), y.getValue(), sy.getValue(), points));
+        z.valueProperty().addListener((ObservableValue<? extends Number> observable, Number oldValue, Number newValue) -> draw(canvas, v_x.getValue(), v_z.getValue(), focal.getValue(), z.getValue(), x.getValue(), y.getValue(), sy.getValue(), points));
+        focal.valueProperty().addListener((ObservableValue<? extends Number> observable, Number oldValue, Number newValue) -> draw(canvas, v_x.getValue(), v_z.getValue(), focal.getValue(), z.getValue(), x.getValue(), y.getValue(), sy.getValue(), points));
+        scaling.valueProperty().addListener((ObservableValue<? extends Number> observable, Number oldValue, Number newValue) -> draw(canvas, v_x.getValue(), v_z.getValue(), focal.getValue(), z.getValue(), x.getValue(), y.getValue(), sy.getValue(), points));
+        x.valueProperty().addListener((ObservableValue<? extends Number> observable, Number oldValue, Number newValue) -> draw(canvas, v_x.getValue(), v_z.getValue(), focal.getValue(), z.getValue(), x.getValue(), y.getValue(), sy.getValue(), points));
+        y.valueProperty().addListener((ObservableValue<? extends Number> observable, Number oldValue, Number newValue) -> draw(canvas, v_x.getValue(), v_z.getValue(), focal.getValue(), z.getValue(), x.getValue(), y.getValue(), sy.getValue(), points));
+        sy.valueProperty().addListener((ObservableValue<? extends Number> observable, Number oldValue, Number newValue) -> draw(canvas, v_x.getValue(), v_z.getValue(), focal.getValue(), z.getValue(), x.getValue(), y.getValue(), sy.getValue(), points));
+        */
+
         Pane p = new Pane(canvas);
         canvas.widthProperty().bind(p.widthProperty());
         canvas.heightProperty().bind(p.heightProperty());
@@ -86,7 +136,129 @@ public class Main extends Application {
         root.setStyle("-fx-base: rgb(50,50,50); -fx-focus-color: transparent;");
         
         Scene scene = new Scene(root, 900, 500);
-        
+
+        Transition move1 = new Transition() {
+            {
+                setCycleDuration(Duration.seconds(5));
+                setCycleCount(1);
+                setInterpolator(Interpolator.EASE_BOTH);
+                //setRate(30);
+            }
+            @Override
+            protected void interpolate(double frac) {
+                /*x.setValue((-23.143080885953673 - 45.67455016555969) * frac + 45.67455016555969);
+                y.setValue((-276.0 - -1256.0) * frac + -1256.0);
+                sy.setValue((34.16866685833426 - 12.999499268233212) * frac + 12.999499268233212);
+                v_x.setValue((-0.4041296601282294 - -1.5707963267948966) * frac + -1.5707963267948966);
+                v_z.setValue((7.555555555555538 - -0.3888888888888892) * frac + -0.3888888888888892);*/
+
+                x.setValue((346.6237110397198 - -23.143080885953673) * frac + -23.143080885953673);
+                y.setValue((-200 - -276.0) * frac + -276.0);
+                sy.setValue((-142.86789514357395 - 34.16866685833426) * frac + 34.16866685833426);
+                v_x.setValue((-0.38888888888888884 - -0.4041296601282294) * frac + -0.4041296601282294);
+                v_z.setValue((1.1666666666666667 - 1.272370248375952) * frac + 1.272370248375952);
+                focal.setValue((150 - 210) * frac + 210);
+                draw(canvas, v_x.getValue(), v_z.getValue(), focal.getValue(), z.getValue(), x.getValue(), y.getValue(), sy.getValue(), points);
+            }
+        };
+        Transition move2 = new Transition() {
+            {
+                setCycleDuration(Duration.seconds(5));
+                setCycleCount(1);
+                setInterpolator(Interpolator.EASE_BOTH);
+                //setRate(30);
+            }
+            @Override
+            protected void interpolate(double frac) {
+                x.setValue((-927.4145815319733 - 346.6237110397198) * frac + 346.6237110397198);
+                y.setValue(-200);
+                sy.setValue((336.7428105970479 - -142.86789514357395) * frac + -142.86789514357395);
+                v_x.setValue(-0.38888888888888884);
+                v_z.setValue(1.1666666666666667);
+                focal.setValue((210 - 150) * frac + 150);
+                draw(canvas, v_x.getValue(), v_z.getValue(), focal.getValue(), z.getValue(), x.getValue(), y.getValue(), sy.getValue(), points);
+            }
+        };
+        Transition move3 = new Transition() {
+            {
+                setCycleDuration(Duration.seconds(5));
+                setCycleCount(1);
+                setInterpolator(Interpolator.EASE_BOTH);
+                //setRate(30);
+            }
+            @Override
+            protected void interpolate(double frac) {
+                x.setValue((-734.06512064928 - -927.4145815319733) * frac + -927.4145815319733);
+                y.setValue((-524.0 - -200.0) * frac + -200.0);
+                sy.setValue((249.70267056744578 - 336.7428105970479) * frac + 336.7428105970479);
+                v_x.setValue(-0.38888888888888884);
+                v_z.setValue(1.1666666666666667);
+                //focal.setValue(149.6000000000007);
+                draw(canvas, v_x.getValue(), v_z.getValue(), focal.getValue(), z.getValue(), x.getValue(), y.getValue(), sy.getValue(), points);
+            }
+        };
+        Transition move4 = new Transition() {
+            {
+                setCycleDuration(Duration.seconds(5));
+                setCycleCount(1);
+                setInterpolator(Interpolator.EASE_BOTH);
+                //setRate(30);
+            }
+            @Override
+            protected void interpolate(double frac) {
+                x.setValue((-403.08814483523236 - -734.06512064928) * frac + -734.06512064928);
+                y.setValue((-852.0 - -524.0) * frac + -524.0);
+                sy.setValue((138.6070294243774 - 249.70267056744578) * frac + 249.70267056744578);
+                v_x.setValue((-1.166666666666667 - -0.38888888888888884) * frac + -0.38888888888888884);
+                v_z.setValue(1.1666666666666667);
+                draw(canvas, v_x.getValue(), v_z.getValue(), focal.getValue(), z.getValue(), x.getValue(), y.getValue(), sy.getValue(), points);
+            }
+        };
+        Transition move5 = new Transition() {
+            {
+                setCycleDuration(Duration.seconds(5));
+                setCycleCount(1);
+                setInterpolator(Interpolator.EASE_BOTH);
+                //setRate(30);
+            }
+            @Override
+            protected void interpolate(double frac) {
+                x.setValue((45.67455016555969 - -403.08814483523236) * frac + -403.08814483523236);
+                y.setValue((-1256.0 - -852.0) * frac + -852.0);
+                sy.setValue((12.999499268233212 - 138.6070294243774) * frac + 138.6070294243774);
+                v_x.setValue((-1.5707963267948966 - -1.166666666666667) * frac + -1.166666666666667);
+                v_z.setValue((-0.3888888888888892 - 1.1666666666666667) * frac + 1.1666666666666667);
+                draw(canvas, v_x.getValue(), v_z.getValue(), focal.getValue(), z.getValue(), x.getValue(), y.getValue(), sy.getValue(), points);
+            }
+        };
+        Transition move6 = new Transition() {
+            {
+                setCycleDuration(Duration.seconds(20));
+                setCycleCount(1);
+                setInterpolator(Interpolator.EASE_BOTH);
+                //setRate(30);
+            }
+            @Override
+            protected void interpolate(double frac) {
+                x.setValue((-23.143080885953673 - 45.67455016555969) * frac + 45.67455016555969);
+                y.setValue((-276.0 - -1256.0) * frac + -1256.0);
+                sy.setValue((34.16866685833426 - 12.999499268233212) * frac + 12.999499268233212);
+                v_x.setValue((-0.4041296601282294 - -1.5707963267948966) * frac + -1.5707963267948966);
+                v_z.setValue((7.555555555555538 - -0.3888888888888892) * frac + -0.3888888888888892);
+                draw(canvas, v_x.getValue(), v_z.getValue(), focal.getValue(), z.getValue(), x.getValue(), y.getValue(), sy.getValue(), points);
+            }
+        };
+        Transition seq = new SequentialTransition(move1, move2, move3, move4, move5, move6);
+        seq.setCycleCount(-1);
+
+        scene.setOnKeyPressed(ke -> {
+            if (ke.getCode() == KeyCode.P) {
+                System.out.println(x.getValue() + "," + y.getValue() + "," + sy.getValue() + "\t" + v_x.getValue() + "," + v_z.getValue() + "\t" + focal.getValue());
+            } else if (ke.getCode() == KeyCode.R) {
+                seq.playFromStart();
+            }
+        });
+
         primaryStage.setTitle("3D Lidarscanning - Eksamensprojekt");
         primaryStage.setScene(scene);
         primaryStage.show();
@@ -98,9 +270,26 @@ public class Main extends Application {
     public static void main(String[] args) {
         launch(args);
     }
-    
+
+    public void draw(ResizableCanvas canvas, double v_x, double v_z, double focal, double z, double x, double y, double sy, Point... points) {
+        Task<Point[]> calculatePoints = new Task<Point[]>() {
+            @Override
+            protected Point[] call() throws Exception {
+                //Point[] projectedPoints = getProjectedPoints(z, focal, getRotatedPoints(v_x, v_z, points));
+                Point[] projectedPoints = getProjectedPoints(z, focal, getRotatedPoints(v_x, v_z, getTranslatedPoints(x, y, sy, points)));
+                Arrays.sort(projectedPoints, Comparator.comparingDouble(p -> p.z));
+                return projectedPoints;
+            }
+        };
+        calculatePoints.setOnSucceeded(e -> {
+            canvas.setProjectedPoints(calculatePoints.getValue());
+            canvas.draw();
+        });
+        new Thread(calculatePoints).start();
+    }
+
     public Point[] getPoints() throws IOException {
-        File toRead = new File("/home/nicke/Documents/3D_Torvet_28_04_2.log");
+        File toRead = new File( System.getProperty("user.home") + "/Documents/3D_Torvet_28_04_2.log");
         List<String> data = Files.readAllLines(toRead.toPath());
         
         ArrayList<Point> points = new ArrayList<>();
@@ -138,7 +327,15 @@ public class Main extends Application {
         
         return points.toArray(new Point[0]);
     }
-    
+
+    public Point[] getTranslatedPoints(double x, double y, double z, Point... points) {
+        Point[] translatedPoints = new Point[points.length];
+        for (int i = 0; i < translatedPoints.length; i++) {
+            translatedPoints[i] = new Point(points[i].x + x, points[i].y + y, points[i].z + z);
+        }
+        return translatedPoints;
+    }
+
     public Point[] getRotatedPoints(double v_x, double v_z, Point... points) {
         double[] r_x0 = {1, 0, 0};
         double[] r_x1 = {0, Math.cos(v_x), -Math.sin(v_x)};
@@ -193,6 +390,8 @@ public class Main extends Application {
     }
     
     public abstract class ResizableCanvas extends Canvas {
+
+        public abstract void setProjectedPoints(Point... points);
 
         public abstract void draw();
         
