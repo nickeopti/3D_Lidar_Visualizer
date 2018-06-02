@@ -32,7 +32,7 @@ import javafx.util.Duration;
  * @author Nicklas Boserup
  */
 public class Main extends Application {
-    
+
     @Override
     public void start(Stage primaryStage) throws IOException {
         Point[] points = getPoints();
@@ -71,20 +71,15 @@ public class Main extends Application {
 
             @Override
             public void draw() {
-                //Point[] projectedPoints = getProjectedPoints(z.getValue(), focal.getValue(), getRotatedPoints(v_x.getValue(), v_z.getValue(), points));
-                
-                //Arrays.sort(projectedPoints, Comparator.comparingDouble(p -> p.z));
-
                 if (projectedPoints == null)
                     return;
 
                 GraphicsContext gc = getGraphicsContext2D();
                 gc.clearRect(0, 0, getWidth(), getHeight());
-                
-                //for (Point p : projectedPoints) {
+
                 for (int i = projectedPoints.length-1; i > 0; --i) {
                     Point p = projectedPoints[i];
-                    if (p.z <= focal.getValue())
+                    if (p.z < 0)
                         continue;
                     gc.setFill(Color.hsb(p.z/2000d*360, 1, 1));
                     double radius = 4, scale = scaling.getValue();
@@ -110,23 +105,6 @@ public class Main extends Application {
             }
             draw(canvas, v_x.getValue(), v_z.getValue(), focal.getValue(), z.getValue(), x.getValue(), y.getValue(), sy.getValue(), points);
         });
-        /*
-        v_x.valueProperty().addListener((ObservableValue<? extends Number> observable, Number oldValue, Number newValue) -> canvas.draw());
-        v_z.valueProperty().addListener((ObservableValue<? extends Number> observable, Number oldValue, Number newValue) -> canvas.draw());
-        z.valueProperty().addListener((ObservableValue<? extends Number> observable, Number oldValue, Number newValue) -> canvas.draw());
-        focal.valueProperty().addListener((ObservableValue<? extends Number> observable, Number oldValue, Number newValue) -> canvas.draw());
-        scaling.valueProperty().addListener((ObservableValue<? extends Number> observable, Number oldValue, Number newValue) -> canvas.draw());
-
-
-        v_x.valueProperty().addListener((ObservableValue<? extends Number> observable, Number oldValue, Number newValue) -> draw(canvas, v_x.getValue(), v_z.getValue(), focal.getValue(), z.getValue(), x.getValue(), y.getValue(), sy.getValue(), points));
-        v_z.valueProperty().addListener((ObservableValue<? extends Number> observable, Number oldValue, Number newValue) -> draw(canvas, v_x.getValue(), v_z.getValue(), focal.getValue(), z.getValue(), x.getValue(), y.getValue(), sy.getValue(), points));
-        z.valueProperty().addListener((ObservableValue<? extends Number> observable, Number oldValue, Number newValue) -> draw(canvas, v_x.getValue(), v_z.getValue(), focal.getValue(), z.getValue(), x.getValue(), y.getValue(), sy.getValue(), points));
-        focal.valueProperty().addListener((ObservableValue<? extends Number> observable, Number oldValue, Number newValue) -> draw(canvas, v_x.getValue(), v_z.getValue(), focal.getValue(), z.getValue(), x.getValue(), y.getValue(), sy.getValue(), points));
-        scaling.valueProperty().addListener((ObservableValue<? extends Number> observable, Number oldValue, Number newValue) -> draw(canvas, v_x.getValue(), v_z.getValue(), focal.getValue(), z.getValue(), x.getValue(), y.getValue(), sy.getValue(), points));
-        x.valueProperty().addListener((ObservableValue<? extends Number> observable, Number oldValue, Number newValue) -> draw(canvas, v_x.getValue(), v_z.getValue(), focal.getValue(), z.getValue(), x.getValue(), y.getValue(), sy.getValue(), points));
-        y.valueProperty().addListener((ObservableValue<? extends Number> observable, Number oldValue, Number newValue) -> draw(canvas, v_x.getValue(), v_z.getValue(), focal.getValue(), z.getValue(), x.getValue(), y.getValue(), sy.getValue(), points));
-        sy.valueProperty().addListener((ObservableValue<? extends Number> observable, Number oldValue, Number newValue) -> draw(canvas, v_x.getValue(), v_z.getValue(), focal.getValue(), z.getValue(), x.getValue(), y.getValue(), sy.getValue(), points));
-        */
 
         Pane p = new Pane(canvas);
         canvas.widthProperty().bind(p.widthProperty());
@@ -142,16 +120,9 @@ public class Main extends Application {
                 setCycleDuration(Duration.seconds(5));
                 setCycleCount(1);
                 setInterpolator(Interpolator.EASE_BOTH);
-                //setRate(30);
             }
             @Override
             protected void interpolate(double frac) {
-                /*x.setValue((-23.143080885953673 - 45.67455016555969) * frac + 45.67455016555969);
-                y.setValue((-276.0 - -1256.0) * frac + -1256.0);
-                sy.setValue((34.16866685833426 - 12.999499268233212) * frac + 12.999499268233212);
-                v_x.setValue((-0.4041296601282294 - -1.5707963267948966) * frac + -1.5707963267948966);
-                v_z.setValue((7.555555555555538 - -0.3888888888888892) * frac + -0.3888888888888892);*/
-
                 x.setValue((346.6237110397198 - -23.143080885953673) * frac + -23.143080885953673);
                 y.setValue((-200 - -276.0) * frac + -276.0);
                 sy.setValue((-142.86789514357395 - 34.16866685833426) * frac + 34.16866685833426);
@@ -166,7 +137,6 @@ public class Main extends Application {
                 setCycleDuration(Duration.seconds(5));
                 setCycleCount(1);
                 setInterpolator(Interpolator.EASE_BOTH);
-                //setRate(30);
             }
             @Override
             protected void interpolate(double frac) {
@@ -184,7 +154,6 @@ public class Main extends Application {
                 setCycleDuration(Duration.seconds(5));
                 setCycleCount(1);
                 setInterpolator(Interpolator.EASE_BOTH);
-                //setRate(30);
             }
             @Override
             protected void interpolate(double frac) {
@@ -193,7 +162,6 @@ public class Main extends Application {
                 sy.setValue((249.70267056744578 - 336.7428105970479) * frac + 336.7428105970479);
                 v_x.setValue(-0.38888888888888884);
                 v_z.setValue(1.1666666666666667);
-                //focal.setValue(149.6000000000007);
                 draw(canvas, v_x.getValue(), v_z.getValue(), focal.getValue(), z.getValue(), x.getValue(), y.getValue(), sy.getValue(), points);
             }
         };
@@ -202,7 +170,6 @@ public class Main extends Application {
                 setCycleDuration(Duration.seconds(5));
                 setCycleCount(1);
                 setInterpolator(Interpolator.EASE_BOTH);
-                //setRate(30);
             }
             @Override
             protected void interpolate(double frac) {
@@ -219,7 +186,6 @@ public class Main extends Application {
                 setCycleDuration(Duration.seconds(5));
                 setCycleCount(1);
                 setInterpolator(Interpolator.EASE_BOTH);
-                //setRate(30);
             }
             @Override
             protected void interpolate(double frac) {
@@ -236,7 +202,6 @@ public class Main extends Application {
                 setCycleDuration(Duration.seconds(20));
                 setCycleCount(1);
                 setInterpolator(Interpolator.EASE_BOTH);
-                //setRate(30);
             }
             @Override
             protected void interpolate(double frac) {
@@ -249,7 +214,7 @@ public class Main extends Application {
             }
         };
         Transition seq = new SequentialTransition(move1, move2, move3, move4, move5, move6);
-        seq.setCycleCount(-1);
+        seq.setCycleCount(1);
 
         scene.setOnKeyPressed(ke -> {
             if (ke.getCode() == KeyCode.P) {
@@ -368,8 +333,8 @@ public class Main extends Application {
         Point[] projectedPoints = new Point[points.length];
         for (int i = 0; i < projectedPoints.length; i++) {
             projectedPoints[i] = new Point(
-                    -focalLength / (points[i].z-z-focalLength) * points[i].x,
-                    -focalLength / (points[i].z-z-focalLength) * points[i].y,
+                    -focalLength / (points[i].z) * points[i].x,
+                    -focalLength / (points[i].z) * points[i].y,
                     points[i].z-z);
         }
         
@@ -388,7 +353,7 @@ public class Main extends Application {
             return "(" + x + ", " + y + "," + z + ")";
         }
     }
-    
+
     public abstract class ResizableCanvas extends Canvas {
 
         public abstract void setProjectedPoints(Point... points);
