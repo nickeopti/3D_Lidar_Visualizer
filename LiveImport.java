@@ -22,7 +22,8 @@ public class LiveImport {
                         "/bin/sh",
                         "-c",
                         //"ls /etc | grep release"
-                        "java -jar /home/nicke/NetBeansProjects/Handy/dist/Handy.jar | tee ~/Documents/3D-test.log"
+                        //"java -jar /home/nicke/NetBeansProjects/Handy/dist/Handy.jar | tee ~/Documents/3D-test.log"
+                        "pio serialports monitor -b 115200 --raw"
                 };
                 Process process = runtime.exec(cmd);
                 //Process process = runtime.exec("java -jar /home/nicke/NetBeansProjects/Handy/dist/Handy.jar | tee ~/Documents/3D-test.log");
