@@ -227,13 +227,19 @@ public class Main extends Application {
     }
 
     public Point[] getPoints() throws IOException {
-        File toRead = new File( System.getProperty("user.home") + "/Documents/3D_Torvet_28_04_2.log");
+        //File toRead = new File( System.getProperty("user.home") + "/Documents/3D_Torvet_28_04_2.log");
+        File toRead = new File( System.getProperty("user.home") + "/Documents/3D-scanning.log");
         List<String> data = Files.readAllLines(toRead.toPath());
         
         ArrayList<Point> points = new ArrayList<>();
         
         for (int n = 0; n < data.size(); n++) {
-            int distance = Integer.parseInt(data.get(n));
+            int distance = 1;
+            try {
+                distance = Integer.parseInt(data.get(n));
+            } catch(Exception e) {
+                continue;
+            }
             if (distance == 1)
                 continue;
             distance += 5;
