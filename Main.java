@@ -13,6 +13,9 @@ import javafx.animation.Interpolator;
 import javafx.animation.SequentialTransition;
 import javafx.animation.Transition;
 import javafx.application.Application;
+import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.concurrent.Task;
 import javafx.geometry.Insets;
@@ -21,10 +24,7 @@ import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Slider;
 import javafx.scene.input.KeyCode;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Pane;
-import javafx.scene.layout.Priority;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import javafx.util.Duration;
@@ -34,7 +34,7 @@ import javafx.util.Duration;
  */
 public class Main extends Application {
 
-    private Slider v_x, v_z, focal, scaling, x, y, z;
+    private DoubleProperty v_x, v_z, focal, scaling, x, y, z;
     private ResizableCanvas canvas;
     Point[] points;
     double radius = 2.5;
@@ -44,26 +44,15 @@ public class Main extends Application {
         points = getPoints();
         
         BorderPane root = new BorderPane();
-        
-        HBox settings = new HBox(10);
-        settings.setPadding(new Insets(10));
-        v_x = new Slider(-Math.PI/2d, Math.PI/2d, 0);
-        v_z = new Slider(-Math.PI*4, Math.PI*4, 0);
-        focal = new Slider(5, 500, 200);
-        scaling = new Slider(0.1, 20, 1);
 
-        x = new Slider(-2000, 2000, 0);
-        y = new Slider(-2000, 2000, 0);
-        z = new Slider(-2000, 2000, 0);
-        
-        settings.getChildren().addAll(v_x, v_z, focal, scaling, x, y, z);
-        HBox.setHgrow(v_x, Priority.ALWAYS);
-        HBox.setHgrow(v_z, Priority.ALWAYS);
-        HBox.setHgrow(focal, Priority.ALWAYS);
-        HBox.setHgrow(scaling, Priority.ALWAYS);
-        HBox.setHgrow(x, Priority.ALWAYS);
-        HBox.setHgrow(y, Priority.ALWAYS);
-        HBox.setHgrow(z, Priority.ALWAYS);
+        v_x = new SimpleDoubleProperty(0);
+        v_z = new SimpleDoubleProperty(0);
+        focal = new SimpleDoubleProperty(200);
+        scaling = new SimpleDoubleProperty(1);
+        x = new SimpleDoubleProperty(0);
+        y = new SimpleDoubleProperty(0);
+        z = new SimpleDoubleProperty(0);
+
         
         canvas = new ResizableCanvas() {
             Point[] projectedPoints;
@@ -114,11 +103,10 @@ public class Main extends Application {
         canvas.widthProperty().bind(p.widthProperty());
         canvas.heightProperty().bind(p.heightProperty());
         root.setCenter(p);
-        root.setBottom(settings);
-        root.setStyle("-fx-base: rgb(50,50,50); -fx-focus-color: transparent;");
+        p.setStyle("-fx-base: rgb(50,50,50); -fx-focus-color: transparent;");
+        p.setBackground(new Background(new BackgroundFill(Color.gray(0.2), CornerRadii.EMPTY, Insets.EMPTY)));
         
         Scene scene = new Scene(root, 900, 500);
-
 
         // General show-off
         Transition move1 = cameraTransition(-0.38888888888888895, 1.2222222222222225, 202.00000000000003, 454.8901054188032, -156.0, -190.85747921887472,
@@ -132,26 +120,6 @@ public class Main extends Application {
         Transition move5 = cameraTransition(-0.1819074379060071, 7.56637061435919, 250.0, -67.99154384377512, -144.0, 10.087008724062809,
                 -1.5707963267948966, -0.38888888888888895, 250.0, 67.79158071525913, -1252.0, 65.97306792418387, 30);
 
-        // Drone 156
-        Transition move6 = cameraTransition(-0.44444444444444453, 1.2222222222222225, 498.80000000000007, -681.8028481418011, -284.0, 254.50197926729413,
-                -0.44444444444444453, 1.2222222222222225, 498.80000000000007, -754.5984929448392, -428.0, 276.700945407857, 6);
-        Transition move7 = cameraTransition(-0.2777777777777778, 1.166666666666667, 499.6, -433.79550226537975, -112.0, 122.33406942782315,
-                -0.44444444444444453, 1.2222222222222225, 498.80000000000007, -681.8028481418011, -284.0, 254.50197926729413, 9);
-        Transition move8 = cameraTransition(-0.26211942666666666, 1.2738631900000004, 500.0, -102.50189509131866, -126.86122599999999, 19.370578834418026,
-                -0.2777777777777778, 1.166666666666667, 499.6, -433.79550226537975, -112.0, 122.33406942782315, 7);
-        Transition move9 = cameraTransition(-0.31767498222222224, 7.884974301111091, 500.0, -102.50189509131866, -126.86122599999999, 19.370578834418026,
-                -0.26211942666666666, 1.2738631900000004, 500.0, -102.50189509131866, -126.86122599999999, 19.370578834418026, 18);
-
-        // Drone 154
-        Transition move10 = cameraTransition(-1.5707963267948966, -0.3888888888888886, 495.2000000000003, 19.223428528442927, -556.0, 118.74837632763084,
-                -1.5707963267948966, -0.3888888888888886, 492.8000000000004, 11.640218450097734, -1184.0, 100.24175791940502, 30);
-        Transition move11 = cameraTransition(-1.5707963267948966, -0.3888888888888886, 496.4000000000002, 26.138598956481026, -356.0, 146.17428411481603,
-                -1.5707963267948966, -0.3888888888888886, 495.2000000000003, 19.223428528442927, -556.0, 118.74837632763084, 14);
-        Transition move12 = cameraTransition(-0.1819074379060071, -0.3888888888888886, 498.80000000000007, -34.52708167028052, -228.0, -1.8786631509906444,
-                -1.5707963267948966, -0.3888888888888886, 496.4000000000002, 26.138598956481026, -356.0, 146.17428411481603, 7);
-        Transition move13 = cameraTransition(-0.070796326794896, 1.9444444444444453, 500.0, -47.23641980546831, -36.0, -93.08432484019427,
-                -0.1819074379060071, -0.3888888888888886, 498.80000000000007, -34.52708167028052, -228.0, -1.8786631509906444, 11);
-
         // Linear show-offs
         Transition move14 = cameraTransition(-1.5707963267948966, -0.3888888888888886, 500.0, 4.375189446221631, -360.60319985609567, 103.61089582230049,
                 -1.5707963267948966, -0.38888888888888895, 438.053441295546, 55.02529743339124, -1536.0, 78.22773999329186, 25);
@@ -164,12 +132,10 @@ public class Main extends Application {
         Transition move18 = cameraTransition(-0.7374629934615629, 7.510815058803635, 499.6, 204.12488541462113, -412.60319985609567, -81.0310088625334,
                 -0.7930185490171184, 7.510815058803635, 500.0, -1098.3584115854858, -948.6031998560957, 482.04737026040846, 25);
 
-        //Transition seq = new SequentialTransition(move1, move2, move3, move4, move5); // General show-off
-        //Transition seq = new SequentialTransition(move6, move7, move8, move9); // Drone 156
-        //Transition seq = new SequentialTransition(move10, move11, move12, move13); // Drone 154
+        Transition seq = new SequentialTransition(move1, move2, move3, move4, move5); // General show-off
         //Transition seq = new SequentialTransition(move14, move15, move16, move17, move18); // Linear show-offs
-        Transition seq = new SequentialTransition(move15, move16, move17, move14, move18, move1, move2, move3, move4, move5); // Linear show-offs
-        seq.setCycleCount(-1);
+        //Transition seq = new SequentialTransition(move15, move16, move17, move14, move18, move1, move2, move3, move4, move5); // Linear show-offs
+        seq.setCycleCount(Transition.INDEFINITE);
 
         scene.setOnKeyPressed(ke -> {
             switch (ke.getCode()) {
@@ -235,7 +201,7 @@ public class Main extends Application {
         ArrayList<Point> points = new ArrayList<>();
         
         for (int n = 0; n < data.size(); n++) {
-            int distance = 1;
+            int distance;
             try {
                 distance = Integer.parseInt(data.get(n));
             } catch(Exception e) {
