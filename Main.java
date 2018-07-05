@@ -227,8 +227,9 @@ public class Main extends Application {
     }
 
     public Point[] getPoints() throws IOException {
-        //File toRead = new File( System.getProperty("user.home") + "/Documents/3D_Torvet_28_04_2.log");
-        File toRead = new File( System.getProperty("user.home") + "/Documents/3D-scanning.log");
+        File toRead = new File( System.getProperty("user.home") + "/Documents/3D_Torvet_28_04_2.log");
+        //File toRead = new File( System.getProperty("user.home") + "/Documents/3D-scanning.log");
+        //File toRead = new File( System.getProperty("user.home") + "/Documents/3D-scanning_Forb.log");
         List<String> data = Files.readAllLines(toRead.toPath());
         
         ArrayList<Point> points = new ArrayList<>();
